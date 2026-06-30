@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #usage:   ./dnsleaktest.sh [-i interface_ip|interface_name]
 #example: ./dnsleaktest.sh -i eth1
 #         ./dnsleaktest.sh -i 10.0.0.2
@@ -56,12 +56,6 @@ require_command curl
 require_command ping
 check_internet_connection
 
-if command -v jq &> /dev/null; then
-    jq_exists=1
-else
-    jq_exists=0
-fi
-
 id=$(curl ${curl_interface} --silent "https://${api_domain}/id")
 
 for i in $(seq 1 10); do
@@ -69,50 +63,16 @@ for i in $(seq 1 10); do
 done
 
 function print_servers {
-
-    if (( $jq_exists )); then
-
-        echo ${result_json} | \
-            jq  --monochrome-output \
-            --raw-output \
-            ".[] | select(.type == \"${1}\") | \"\(.ip)\(if .country_name != \"\" and  .country_name != false then \" [\(.country_name)\(if .asn != \"\" and .asn != false then \" \(.asn)\" else \"\" end)]\" else \"\" end)\""
-
-    else
-
-        while IFS= read -r line; do
-            if [[ "$line" != *${1} ]]; then
-                continue
-            fi
-
-            ip=$(echo $line | cut -d'|' -f 1)
-            code=$(echo $line | cut -d'|' -f 2)
-            country=$(echo $line | cut -d'|' -f 3)
-            asn=$(echo $line | cut -d'|' -f 4)
-
-            if [ -z "${ip// }" ]; then
-                 continue
-            fi
-
-            if [ -z "${country// }" ]; then
-                 echo "$ip"
-            else
-                 if [ -z "${asn// }" ]; then
-                     echo "$ip [$country]"
-                 else
-                     echo "$ip [$country, $asn]"
-                 fi
-            fi
-        done <<< "$result_txt"
-
-    fi
+    echo ${result_json} | \
+        jq  --monochrome-output \
+        --raw-output \
+        ".[] | select(.type == \"${1}\") | \"\(.ip)\(if .country_name != \"\" and  .country_name != false then \" [\(.country_name)\(if .asn != \"\" and .asn != false then \" \(.asn)\" else \"\" end)]\" else \"\" end)\""
 }
 
 
-if (( $jq_exists )); then
-    result_json=$(curl ${curl_interface} --silent "https://${api_domain}/dnsleak/test/${id}?json")
-else
-    result_txt=$(curl ${curl_interface} --silent "https://${api_domain}/dnsleak/test/${id}?txt")
-fi
+
+result_json=$(curl ${curl_interface} --silent "https://${api_domain}/dnsleak/test/${id}?json")
+
 
 dns_count=$(print_servers "dns" | wc -l)
 
