@@ -9,7 +9,7 @@ Please, before use make sure you have `curl` and `ping` installed.
 
 1. Download dnsleaktest.sh
 ```
-curl https://raw.githubusercontent.com/macvk/dnsleaktest/master/dnsleaktest.sh -o dnsleaktest.sh
+curl https://raw.githubusercontent.com/thenoname/dnsleaktest/master/dnsleaktest.sh -o dnsleaktest.sh
 ```
 
 ```
